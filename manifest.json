@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-article-exporter",
+	"name": "Article Exporter",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Export articles to disk.",
+	"author": "sincerefly",
+	"authorUrl": "https://github.com/sincerefly",
+	"fundingUrl": "https://github.com/sincerefly/obsidian-article-exporter",
+	"isDesktopOnly": false
+}
