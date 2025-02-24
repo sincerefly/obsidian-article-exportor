@@ -9,10 +9,12 @@ import { moment } from 'obsidian';
 interface ArticleExporterSettings {
 	mySetting: string;
 	exportDirectory?: string;
+	host?: string; // 新增 host 字段
 }
 
 const DEFAULT_SETTINGS: ArticleExporterSettings = {
-	mySetting: 'default'
+	mySetting: 'default',
+	host: '' // 默认值为空
 }
 
 export default class ArticleExporter extends Plugin {
@@ -154,17 +156,22 @@ export default class ArticleExporter extends Plugin {
 					image.onload = () => {
 						const actualWidth = image.width;
 
+						// 根据是否配置了 host 生成不同的图片链接
+						const imageUrl = this.settings.host 
+							? `${this.settings.host}/${timestamp}/${imageName}`
+							: `${timestamp}/${imageName}`;
+
 						// 更新文章内容中的图片链接
 						if (specifiedWidth) {
 							const widthPercentage = ((specifiedWidth / actualWidth) * 100).toFixed(2);
 							updatedData = updatedData.replace(
 								match[0],
-								`<img src="${timestamp}/${imageName}" width="${widthPercentage}%" />`
+								`<img src="${imageUrl}" width="${widthPercentage}%" />`
 							);
 						} else {
 							updatedData = updatedData.replace(
 								match[0],
-								`![${imageName}](${timestamp}/${imageName})`
+								`![${imageName}](${imageUrl})`
 							);
 						}
 						resolve(null);
@@ -236,6 +243,18 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.exportDirectory || '')
 				.onChange(async (value) => {
 					this.plugin.settings.exportDirectory = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// 新增 host 设置项
+		new Setting(containerEl)
+			.setName('Host')
+			.setDesc('Host for image URLs (e.g., http://xxx.com)')
+			.addText(text => text
+				.setPlaceholder('Enter host URL')
+				.setValue(this.plugin.settings.host || '')
+				.onChange(async (value) => {
+					this.plugin.settings.host = value;
 					await this.plugin.saveSettings();
 				}));
 	}
