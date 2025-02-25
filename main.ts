@@ -9,12 +9,14 @@ interface ArticleExporterSettings {
 	mySetting: string; // 自定义设置
 	exportDirectory?: string; // 导出目录
 	host?: string; // 图片链接的主机地址
+	minImageWidthPercentage?: number; // 图片最小宽度百分比
 }
 
 // 默认设置
 const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	mySetting: 'default',
-	host: '' // 默认主机为空
+	host: '', // 默认主机为空
+	minImageWidthPercentage: 0 // 默认不限制最小宽度
 }
 
 // 插件主类
@@ -163,7 +165,12 @@ export default class ArticleExporter extends Plugin {
 
 						// 更新文章内容中的图片链接
 						if (specifiedWidth) {
-							const widthPercentage = ((specifiedWidth / actualWidth) * 100).toFixed(2);
+							let widthPercentage = ((specifiedWidth / actualWidth) * 100).toFixed(2);
+							// 如果设置了最小宽度百分比且计算出的宽度小于最小值，则使用最小值
+							if (this.settings.minImageWidthPercentage && 
+								parseFloat(widthPercentage) < this.settings.minImageWidthPercentage) {
+								widthPercentage = this.settings.minImageWidthPercentage.toFixed(2);
+							}
 							updatedData = updatedData.replace(
 								match[0],
 								`<img src="${imageUrl}" width="${widthPercentage}%" />`
@@ -259,6 +266,19 @@ class SampleSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.host = value;
 					await this.plugin.saveSettings(); // 保存设置
+				}));
+
+		// 添加最小图片宽度百分比设置
+		new Setting(containerEl)
+			.setName('最小图片宽度百分比')
+			.setDesc('设置图片的最小宽度百分比（0表示不限制）')
+			.addSlider(slider => slider
+				.setLimits(0, 100, 5)
+				.setValue(this.plugin.settings.minImageWidthPercentage || 0)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.minImageWidthPercentage = value;
+					await this.plugin.saveSettings();
 				}));
 	}
 }
