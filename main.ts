@@ -4,70 +4,67 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { moment } from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
+// 定义插件的设置接口
 interface ArticleExporterSettings {
-	mySetting: string;
-	exportDirectory?: string;
-	host?: string; // 新增 host 字段
+	mySetting: string; // 自定义设置
+	exportDirectory?: string; // 导出目录
+	host?: string; // 图片链接的主机地址
 }
 
+// 默认设置
 const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	mySetting: 'default',
-	host: '' // 默认值为空
+	host: '' // 默认主机为空
 }
 
+// 插件主类
 export default class ArticleExporter extends Plugin {
 	settings: ArticleExporterSettings;
 
+	// 插件加载时调用
 	async onload() {
-		await this.loadSettings();
+		await this.loadSettings(); // 加载设置
 
-		// This creates an icon in the left ribbon.
+		// 在左侧添加一个图标
 		const ribbonIconEl = this.addRibbonIcon('dice', '导出笔记', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+			new Notice('This is a notice!'); // 点击图标时显示通知
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		ribbonIconEl.addClass('my-plugin-ribbon-class'); // 为图标添加样式
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
+		// 在状态栏添加一个项目
 		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		statusBarItemEl.setText('Status Bar Text'); // 设置状态栏文本
 
-		// This adds a simple command that can be triggered anywhere
+		// 添加一个简单命令
 		this.addCommand({
 			id: 'open-sample-modal-simple',
 			name: 'Open sample modal (simple)',
 			callback: () => {
-				new SampleModal(this.app).open();
+				new SampleModal(this.app).open(); // 打开一个示例模态框
 			}
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
+
+		// 添加一个编辑器命令
 		this.addCommand({
 			id: 'sample-editor-command',
 			name: 'Sample editor command',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
+				console.log(editor.getSelection()); // 打印当前选中的文本
+				editor.replaceSelection('Sample Editor Command'); // 替换选中的文本
 			}
 		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
+
+		// 添加一个复杂命令
 		this.addCommand({
 			id: 'open-sample-modal-complex',
 			name: 'Open sample modal (complex)',
 			checkCallback: (checking: boolean) => {
-				// Conditions to check
 				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
 					if (!checking) {
-						new SampleModal(this.app).open();
+						new SampleModal(this.app).open(); // 打开模态框
 					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+					return true; // 允许命令在命令面板中显示
 				}
 			}
 		});
@@ -79,44 +76,47 @@ export default class ArticleExporter extends Plugin {
 			callback: async () => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
-					await this.exportNoteToFile(activeFile);
+					await this.exportNoteToFile(activeFile); // 导出当前笔记
 				} else {
-					new Notice('No active note to export.');
+					new Notice('No active note to export.'); // 没有活动笔记时显示通知
 				}
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
+		// 添加设置选项卡
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
+		// 注册全局 DOM 事件
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+			console.log('click', evt); // 打印点击事件
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// 注册定时器
+		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000)); // 每5分钟打印一次
 	}
 
+	// 插件卸载时调用
 	onunload() {
-
+		// 可以在这里添加卸载时的清理代码
 	}
 
+	// 加载插件设置
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
+	// 保存插件设置
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
 
+	// 导出笔记到文件
 	async exportNoteToFile(file: TFile) {
-		const data = await this.app.vault.read(file);
-		const exportDir = this.settings.exportDirectory;
+		const data = await this.app.vault.read(file); // 读取笔记内容
+		const exportDir = this.settings.exportDirectory; // 获取导出目录
 
 		if (!exportDir) {
-			new Notice('请先设置插件的导出目录');
+			new Notice('请先设置插件的导出目录'); // 如果没有设置导出目录，显示通知
 			return;
 		}
 
@@ -186,15 +186,16 @@ export default class ArticleExporter extends Plugin {
 		const exportPath = path.join(exportDir, `${file.basename}.md`);
 		fs.writeFile(exportPath, updatedData, (err) => {
 			if (err) {
-				new Notice('Failed to export note.');
+				new Notice('Failed to export note.'); // 导出失败时显示通知
 				console.error(err);
 			} else {
-				new Notice(`Note and images exported to ${exportDir}`);
+				new Notice(`Note and images exported to ${exportDir}`); // 导出成功时显示通知
 			}
 		});
 	}
 }
 
+// 示例模态框类
 class SampleModal extends Modal {
 	constructor(app: App) {
 		super(app);
@@ -202,15 +203,16 @@ class SampleModal extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		contentEl.setText('Woah!');
+		contentEl.setText('Woah!'); // 打开模态框时设置文本
 	}
 
 	onClose() {
 		const {contentEl} = this;
-		contentEl.empty();
+		contentEl.empty(); // 关闭模态框时清空内容
 	}
 }
 
+// 设置选项卡类
 class SampleSettingTab extends PluginSettingTab {
 	plugin: ArticleExporter;
 
@@ -222,8 +224,9 @@ class SampleSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 
-		containerEl.empty();
+		containerEl.empty(); // 清空容器
 
+		// 添加设置项
 		new Setting(containerEl)
 			.setName('Setting #1')
 			.setDesc('It\'s a secret')
@@ -232,7 +235,7 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.mySetting)
 				.onChange(async (value) => {
 					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
+					await this.plugin.saveSettings(); // 保存设置
 				}));
 
 		new Setting(containerEl)
@@ -243,7 +246,7 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.exportDirectory || '')
 				.onChange(async (value) => {
 					this.plugin.settings.exportDirectory = value;
-					await this.plugin.saveSettings();
+					await this.plugin.saveSettings(); // 保存设置
 				}));
 
 		// 新增 host 设置项
@@ -255,7 +258,7 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.host || '')
 				.onChange(async (value) => {
 					this.plugin.settings.host = value;
-					await this.plugin.saveSettings();
+					await this.plugin.saveSettings(); // 保存设置
 				}));
 	}
 }
