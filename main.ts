@@ -12,6 +12,7 @@ interface ArticleExporterSettings {
 	defaultPrefixPath?: string; // 默认前缀路径
 	prefixPaths?: string[]; // 前缀路径列表
 	minImageWidthPercentage?: number; // 图片最小宽度百分比
+	enableMetaData?: boolean; // 是否启用生成 meta 元数据
 }
 
 // 默认设置
@@ -20,7 +21,8 @@ const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	host: '', // 默认主机为空
 	defaultPrefixPath: '', // 默认前缀路径为空
 	prefixPaths: [], // 前缀路径列表
-	minImageWidthPercentage: 0 // 默认不限制最小宽度
+	minImageWidthPercentage: 0, // 默认不限制最小宽度
+	enableMetaData: false // 默认不启用 meta 元数据
 }
 
 // 插件主类
@@ -216,9 +218,20 @@ export default class ArticleExporter extends Plugin {
 			}
 		}
 
+		// 如果启用了元数据，在文章开头添加 meta 信息
+		let finalData = updatedData;
+		if (this.settings.enableMetaData) {
+			const metaData = `title: ${file.basename}
+date: ${moment().format('YYYY-MM-DD HH:mm:ss')}
+id: ${timestamp}
+
+`;
+			finalData = metaData + updatedData;
+		}
+
 		// 导出更新后的文章
 		const exportPath = path.join(exportDir, `${file.basename}.md`);
-		fs.writeFile(exportPath, updatedData, (err) => {
+		fs.writeFile(exportPath, finalData, (err) => {
 			if (err) {
 				new Notice('Failed to export note.'); // 导出失败时显示通知
 				console.error(err);
@@ -400,6 +413,17 @@ class SampleSettingTab extends PluginSettingTab {
 				.setDynamicTooltip()
 				.onChange(async (value) => {
 					this.plugin.settings.minImageWidthPercentage = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// 添加启用元数据设置
+		new Setting(containerEl)
+			.setName('启用 Meta 元数据')
+			.setDesc('导出时在文章开头自动添加 title、date、id 等元数据')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableMetaData || false)
+				.onChange(async (value) => {
+					this.plugin.settings.enableMetaData = value;
 					await this.plugin.saveSettings();
 				}));
 	}
