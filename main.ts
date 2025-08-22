@@ -9,7 +9,8 @@ interface ArticleExporterSettings {
 	mySetting: string; // 自定义设置
 	exportDirectory?: string; // 导出目录
 	host?: string; // 图片链接的主机地址
-	prefixPath?: string; // 图片链接的前缀路径
+	defaultPrefixPath?: string; // 默认前缀路径
+	prefixPaths?: string[]; // 前缀路径列表
 	minImageWidthPercentage?: number; // 图片最小宽度百分比
 }
 
@@ -17,7 +18,8 @@ interface ArticleExporterSettings {
 const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	mySetting: 'default',
 	host: '', // 默认主机为空
-	prefixPath: '', // 默认前缀路径为空
+	defaultPrefixPath: '', // 默认前缀路径为空
+	prefixPaths: [], // 前缀路径列表
 	minImageWidthPercentage: 0 // 默认不限制最小宽度
 }
 
@@ -80,7 +82,21 @@ export default class ArticleExporter extends Plugin {
 			callback: async () => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
-					await this.exportNoteToFile(activeFile); // 导出当前笔记
+					// 检查是否需要选择前缀路径
+					if (this.settings.defaultPrefixPath || (this.settings.prefixPaths && this.settings.prefixPaths.length > 0)) {
+						// 如果有默认前缀路径，直接使用
+						if (this.settings.defaultPrefixPath) {
+							await this.exportNoteToFile(activeFile, this.settings.defaultPrefixPath);
+						} else {
+							// 否则显示选择对话框
+							new PrefixPathSelectionModal(this.app, this, activeFile, async (selectedPath: string) => {
+								await this.exportNoteToFile(activeFile, selectedPath);
+							}).open();
+						}
+					} else {
+						// 没有配置前缀路径，直接导出
+						await this.exportNoteToFile(activeFile, '');
+					}
 				} else {
 					new Notice('No active note to export.'); // 没有活动笔记时显示通知
 				}
@@ -115,7 +131,7 @@ export default class ArticleExporter extends Plugin {
 	}
 
 	// 导出笔记到文件
-	async exportNoteToFile(file: TFile) {
+	async exportNoteToFile(file: TFile, selectedPrefixPath: string = '') {
 		const data = await this.app.vault.read(file); // 读取笔记内容
 		const exportDir = this.settings.exportDirectory; // 获取导出目录
 
@@ -162,12 +178,12 @@ export default class ArticleExporter extends Plugin {
 					image.onload = () => {
 						const actualWidth = image.width;
 
-						// 根据是否配置了 host 和 prefixPath 生成不同的图片链接
+						// 根据是否配置了 host 和 selectedPrefixPath 生成不同的图片链接
 						let imageUrl = `${timestamp}/${imageName}`;
 						if (this.settings.host) {
-							if (this.settings.prefixPath) {
-								// 如果同时配置了 host 和 prefixPath，拼接完整路径
-								imageUrl = `${this.settings.host}/${this.settings.prefixPath}/${timestamp}/${imageName}`;
+							if (selectedPrefixPath) {
+								// 如果同时配置了 host 和 selectedPrefixPath，拼接完整路径
+								imageUrl = `${this.settings.host}/${selectedPrefixPath}/${timestamp}/${imageName}`;
 							} else {
 								// 只配置了 host，使用原来的逻辑
 								imageUrl = `${this.settings.host}/${timestamp}/${imageName}`;
@@ -210,6 +226,76 @@ export default class ArticleExporter extends Plugin {
 				new Notice(`Note and images exported to ${exportDir}`); // 导出成功时显示通知
 			}
 		});
+	}
+}
+
+// 选择前缀路径的模态框类
+class PrefixPathSelectionModal extends Modal {
+	plugin: ArticleExporter;
+	file: TFile;
+	onPathSelected: (selectedPath: string) => void;
+
+	constructor(app: App, plugin: ArticleExporter, file: TFile, onPathSelected: (selectedPath: string) => void) {
+		super(app);
+		this.plugin = plugin;
+		this.file = file;
+		this.onPathSelected = onPathSelected;
+	}
+
+	onOpen() {
+		const {contentEl} = this;
+		contentEl.createEl("h2", {text: "选择前缀路径"});
+		
+		const description = contentEl.createEl("p", {text: "请选择要使用的前缀路径："});
+		description.style.marginBottom = "20px";
+
+		// 如果有默认前缀路径，显示为第一个选项
+		if (this.plugin.settings.defaultPrefixPath) {
+			const defaultOption = contentEl.createEl("button", {
+				text: `默认: ${this.plugin.settings.defaultPrefixPath}`,
+				cls: "mod-cta"
+			});
+			defaultOption.style.width = "100%";
+			defaultOption.style.marginBottom = "10px";
+			defaultOption.addEventListener("click", () => {
+				this.onPathSelected(this.plugin.settings.defaultPrefixPath!);
+				this.close();
+			});
+		}
+
+		// 显示前缀路径列表
+		if (this.plugin.settings.prefixPaths && this.plugin.settings.prefixPaths.length > 0) {
+			this.plugin.settings.prefixPaths.forEach(path => {
+				const option = contentEl.createEl("button", {text: path});
+				option.style.width = "100%";
+				option.style.marginBottom = "10px";
+				option.addEventListener("click", () => {
+					this.onPathSelected(path);
+					this.close();
+				});
+			});
+		}
+
+		// 添加"不使用前缀路径"选项
+		const noPrefixOption = contentEl.createEl("button", {text: "不使用前缀路径"});
+		noPrefixOption.style.width = "100%";
+		noPrefixOption.style.marginBottom = "10px";
+		noPrefixOption.addEventListener("click", () => {
+			this.onPathSelected("");
+			this.close();
+		});
+
+		// 添加取消按钮
+		const cancelButton = contentEl.createEl("button", {text: "取消"});
+		cancelButton.style.width = "100%";
+		cancelButton.addEventListener("click", () => {
+			this.close();
+		});
+	}
+
+	onClose() {
+		const {contentEl} = this;
+		contentEl.empty();
 	}
 }
 
@@ -279,15 +365,28 @@ class SampleSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings(); // 保存设置
 				}));
 
-		// 新增 prefixPath 设置项
+		// 新增 defaultPrefixPath 设置项
 		new Setting(containerEl)
-			.setName('Prefix Path')
-			.setDesc('Prefix path for image URLs (e.g., moments)')
+			.setName('Default Prefix Path')
+			.setDesc('Default prefix path for image URLs (e.g., moments)')
 			.addText(text => text
-				.setPlaceholder('Enter prefix path')
-				.setValue(this.plugin.settings.prefixPath || '')
+				.setPlaceholder('Enter default prefix path')
+				.setValue(this.plugin.settings.defaultPrefixPath || '')
 				.onChange(async (value) => {
-					this.plugin.settings.prefixPath = value;
+					this.plugin.settings.defaultPrefixPath = value;
+					await this.plugin.saveSettings(); // 保存设置
+				}));
+
+		// 新增 prefixPaths 列表设置项
+		new Setting(containerEl)
+			.setName('Prefix Paths List')
+			.setDesc('List of available prefix paths (one per line)')
+			.addTextArea(text => text
+				.setPlaceholder('moments\nblog\nphotos\n...')
+				.setValue(this.plugin.settings.prefixPaths ? this.plugin.settings.prefixPaths.join('\n') : '')
+				.onChange(async (value) => {
+					// 将文本按行分割，过滤空行
+					this.plugin.settings.prefixPaths = value.split('\n').filter(line => line.trim() !== '');
 					await this.plugin.saveSettings(); // 保存设置
 				}));
 
