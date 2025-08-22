@@ -9,6 +9,7 @@ interface ArticleExporterSettings {
 	mySetting: string; // 自定义设置
 	exportDirectory?: string; // 导出目录
 	host?: string; // 图片链接的主机地址
+	prefixPath?: string; // 图片链接的前缀路径
 	minImageWidthPercentage?: number; // 图片最小宽度百分比
 }
 
@@ -16,6 +17,7 @@ interface ArticleExporterSettings {
 const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	mySetting: 'default',
 	host: '', // 默认主机为空
+	prefixPath: '', // 默认前缀路径为空
 	minImageWidthPercentage: 0 // 默认不限制最小宽度
 }
 
@@ -160,10 +162,17 @@ export default class ArticleExporter extends Plugin {
 					image.onload = () => {
 						const actualWidth = image.width;
 
-						// 根据是否配置了 host 生成不同的图片链接
-						const imageUrl = this.settings.host 
-							? `${this.settings.host}/${timestamp}/${imageName}`
-							: `${timestamp}/${imageName}`;
+						// 根据是否配置了 host 和 prefixPath 生成不同的图片链接
+						let imageUrl = `${timestamp}/${imageName}`;
+						if (this.settings.host) {
+							if (this.settings.prefixPath) {
+								// 如果同时配置了 host 和 prefixPath，拼接完整路径
+								imageUrl = `${this.settings.host}/${this.settings.prefixPath}/${timestamp}/${imageName}`;
+							} else {
+								// 只配置了 host，使用原来的逻辑
+								imageUrl = `${this.settings.host}/${timestamp}/${imageName}`;
+							}
+						}
 
 						// 更新文章内容中的图片链接
 						if (specifiedWidth) {
@@ -261,12 +270,24 @@ class SampleSettingTab extends PluginSettingTab {
 		// 新增 host 设置项
 		new Setting(containerEl)
 			.setName('Host')
-			.setDesc('Host for image URLs (e.g., http://xxx.com)')
+			.setDesc('Host for image URLs (e.g., https://images.yasking.org)')
 			.addText(text => text
 				.setPlaceholder('Enter host URL')
 				.setValue(this.plugin.settings.host || '')
 				.onChange(async (value) => {
 					this.plugin.settings.host = value;
+					await this.plugin.saveSettings(); // 保存设置
+				}));
+
+		// 新增 prefixPath 设置项
+		new Setting(containerEl)
+			.setName('Prefix Path')
+			.setDesc('Prefix path for image URLs (e.g., moments)')
+			.addText(text => text
+				.setPlaceholder('Enter prefix path')
+				.setValue(this.plugin.settings.prefixPath || '')
+				.onChange(async (value) => {
+					this.plugin.settings.prefixPath = value;
 					await this.plugin.saveSettings(); // 保存设置
 				}));
 
