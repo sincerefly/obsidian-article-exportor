@@ -147,7 +147,7 @@ export default class ArticleExporter extends Plugin {
 
 		// 解析文章内容，查找图片链接
 		const imageRegex = /!\[.*?\]\((.*?)\)|!\[\[(.*?)(?:\|(\d+))?\]\]/g;
-		let match;
+		let match: RegExpExecArray | null;
 		let imageIndex = 1;
 		let updatedData = data;
 
@@ -199,12 +199,12 @@ export default class ArticleExporter extends Plugin {
 								widthPercentage = this.settings.minImageWidthPercentage.toFixed(2);
 							}
 							updatedData = updatedData.replace(
-								match[0],
+								match![0],
 								`<img src="${imageUrl}" width="${widthPercentage}%" />`
 							);
 						} else {
 							updatedData = updatedData.replace(
-								match[0],
+								match![0],
 								`![${imageName}](${imageUrl})`
 							);
 						}
