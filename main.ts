@@ -4,6 +4,114 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { moment } from 'obsidian';
 
+// 多语言支持
+interface LanguageStrings {
+	// 设置项
+	exportDirectory: string;
+	exportDirectoryDesc: string;
+	host: string;
+	hostDesc: string;
+	defaultPrefixPath: string;
+	defaultPrefixPathDesc: string;
+	prefixPathsList: string;
+	prefixPathsListDesc: string;
+	minImageWidthPercentage: string;
+	minImageWidthPercentageDesc: string;
+	enableMetaData: string;
+	enableMetaDataDesc: string;
+	browse: string;
+	
+	// 提示信息
+	noActiveNote: string;
+	exportSuccess: string;
+	exportFailed: string;
+	setExportDirectoryFirst: string;
+	cannotOpenFilePicker: string;
+	pleaseEnterPath: string;
+	
+	// 模态框
+	selectPrefixPath: string;
+	selectPrefixPathDesc: string;
+	defaultOption: string;
+	noPrefixOption: string;
+	cancel: string;
+	
+	// 命令
+	exportCurrentNote: string;
+}
+
+// 语言配置
+const LANGUAGES: Record<string, LanguageStrings> = {
+	'zh': {
+		// 设置项
+		exportDirectory: '导出目录',
+		exportDirectoryDesc: '选择导出笔记的目录',
+		host: '主机地址',
+		hostDesc: '图片链接的主机地址（例如：https://images.yasking.org）',
+		defaultPrefixPath: '默认前缀路径',
+		defaultPrefixPathDesc: '默认前缀路径（例如：moments）',
+		prefixPathsList: '前缀路径列表',
+		prefixPathsListDesc: '可用的前缀路径列表（每行一个）',
+		minImageWidthPercentage: '最小图片宽度百分比',
+		minImageWidthPercentageDesc: '设置图片的最小宽度百分比（0表示不限制）',
+		enableMetaData: '启用 Meta 元数据',
+		enableMetaDataDesc: '导出时在文章开头自动添加 title、date、id 等元数据',
+		browse: '浏览',
+		
+		// 提示信息
+		noActiveNote: '没有活动的笔记可导出。',
+		exportSuccess: '笔记和图片已导出到',
+		exportFailed: '导出笔记失败。',
+		setExportDirectoryFirst: '请先设置插件的导出目录',
+		cannotOpenFilePicker: '无法打开文件选择器，请手动输入路径',
+		pleaseEnterPath: '请手动输入导出目录路径，或使用系统文件管理器选择后复制路径',
+		
+		// 模态框
+		selectPrefixPath: '选择前缀路径',
+		selectPrefixPathDesc: '请选择要使用的前缀路径：',
+		defaultOption: '默认：',
+		noPrefixOption: '不使用前缀路径',
+		cancel: '取消',
+		
+		// 命令
+		exportCurrentNote: '导出当前笔记'
+	},
+	'en': {
+		// 设置项
+		exportDirectory: 'Export Directory',
+		exportDirectoryDesc: 'Directory to export notes to',
+		host: 'Host',
+		hostDesc: 'Host for image URLs (e.g., https://images.yasking.org)',
+		defaultPrefixPath: 'Default Prefix Path',
+		defaultPrefixPathDesc: 'Default prefix path for image URLs (e.g., moments)',
+		prefixPathsList: 'Prefix Paths List',
+		prefixPathsListDesc: 'List of available prefix paths (one per line)',
+		minImageWidthPercentage: 'Min Image Width Percentage',
+		minImageWidthPercentageDesc: 'Set minimum image width percentage (0 means no limit)',
+		enableMetaData: 'Enable Meta Data',
+		enableMetaDataDesc: 'Automatically add title, date, id metadata at the beginning of exported articles',
+		browse: 'Browse',
+		
+		// 提示信息
+		noActiveNote: 'No active note to export.',
+		exportSuccess: 'Note and images exported to',
+		exportFailed: 'Failed to export note.',
+		setExportDirectoryFirst: 'Please set the plugin export directory first',
+		cannotOpenFilePicker: 'Cannot open file picker, please enter path manually',
+		pleaseEnterPath: 'Please manually enter the export directory path, or use system file manager to select and copy the path',
+		
+		// 模态框
+		selectPrefixPath: 'Select Prefix Path',
+		selectPrefixPathDesc: 'Please select the prefix path to use:',
+		defaultOption: 'Default: ',
+		noPrefixOption: 'No Prefix Path',
+		cancel: 'Cancel',
+		
+		// 命令
+		exportCurrentNote: 'Export Current Note'
+	}
+};
+
 // 定义插件的设置接口
 interface ArticleExporterSettings {
 	mySetting: string; // 自定义设置
@@ -23,6 +131,27 @@ const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	prefixPaths: [], // 前缀路径列表
 	minImageWidthPercentage: 0, // 默认不限制最小宽度
 	enableMetaData: false // 默认不启用 meta 元数据
+}
+
+// 获取当前语言
+function getCurrentLanguage(app: App): string {
+	// 尝试从 Obsidian 设置中获取语言
+	try {
+		// 检查浏览器语言设置
+		const browserLang = navigator.language || navigator.languages[0] || 'en';
+		if (browserLang.startsWith('zh')) {
+			return 'zh';
+		}
+	} catch (error) {
+		console.log('无法检测浏览器语言');
+	}
+	return 'en';
+}
+
+// 获取语言字符串
+function getLanguageStrings(app: App): LanguageStrings {
+	const lang = getCurrentLanguage(app);
+	return LANGUAGES[lang] || LANGUAGES['en'];
 }
 
 // 插件主类
@@ -80,7 +209,7 @@ export default class ArticleExporter extends Plugin {
 		// 添加导出文章的命令
 		this.addCommand({
 			id: 'export-current-note',
-			name: 'Export Current Note',
+			name: getLanguageStrings(this.app).exportCurrentNote,
 			callback: async () => {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
@@ -100,7 +229,7 @@ export default class ArticleExporter extends Plugin {
 						await this.exportNoteToFile(activeFile, '');
 					}
 				} else {
-					new Notice('No active note to export.'); // 没有活动笔记时显示通知
+					new Notice(getLanguageStrings(this.app).noActiveNote);
 				}
 			}
 		});
@@ -138,7 +267,7 @@ export default class ArticleExporter extends Plugin {
 		const exportDir = this.settings.exportDirectory; // 获取导出目录
 
 		if (!exportDir) {
-			new Notice('请先设置插件的导出目录'); // 如果没有设置导出目录，显示通知
+			new Notice(getLanguageStrings(this.app).setExportDirectoryFirst);
 			return;
 		}
 
@@ -233,10 +362,10 @@ id: ${timestamp}
 		const exportPath = path.join(exportDir, `${file.basename}.md`);
 		fs.writeFile(exportPath, finalData, (err) => {
 			if (err) {
-				new Notice('Failed to export note.'); // 导出失败时显示通知
+				new Notice(getLanguageStrings(this.app).exportFailed);
 				console.error(err);
 			} else {
-				new Notice(`Note and images exported to ${exportDir}`); // 导出成功时显示通知
+				new Notice(`${getLanguageStrings(this.app).exportSuccess} ${exportDir}`);
 			}
 		});
 	}
@@ -257,15 +386,17 @@ class PrefixPathSelectionModal extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		contentEl.createEl("h2", {text: "选择前缀路径"});
+		const lang = getLanguageStrings(this.plugin.app);
 		
-		const description = contentEl.createEl("p", {text: "请选择要使用的前缀路径："});
+		contentEl.createEl("h2", {text: lang.selectPrefixPath});
+		
+		const description = contentEl.createEl("p", {text: lang.selectPrefixPathDesc});
 		description.style.marginBottom = "20px";
 
 		// 如果有默认前缀路径，显示为第一个选项
 		if (this.plugin.settings.defaultPrefixPath) {
 			const defaultOption = contentEl.createEl("button", {
-				text: `默认: ${this.plugin.settings.defaultPrefixPath}`,
+				text: `${lang.defaultOption}${this.plugin.settings.defaultPrefixPath}`,
 				cls: "mod-cta"
 			});
 			defaultOption.style.width = "100%";
@@ -290,7 +421,7 @@ class PrefixPathSelectionModal extends Modal {
 		}
 
 		// 添加"不使用前缀路径"选项
-		const noPrefixOption = contentEl.createEl("button", {text: "不使用前缀路径"});
+		const noPrefixOption = contentEl.createEl("button", {text: lang.noPrefixOption});
 		noPrefixOption.style.width = "100%";
 		noPrefixOption.style.marginBottom = "10px";
 		noPrefixOption.addEventListener("click", () => {
@@ -299,7 +430,7 @@ class PrefixPathSelectionModal extends Modal {
 		});
 
 		// 添加取消按钮
-		const cancelButton = contentEl.createEl("button", {text: "取消"});
+		const cancelButton = contentEl.createEl("button", {text: lang.cancel});
 		cancelButton.style.width = "100%";
 		cancelButton.addEventListener("click", () => {
 			this.close();
@@ -340,6 +471,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 	display(): void {
 		const {containerEl} = this;
+		const lang = getLanguageStrings(this.plugin.app);
 
 		containerEl.empty(); // 清空容器
 
@@ -356,8 +488,8 @@ class SampleSettingTab extends PluginSettingTab {
 				}));
 
 		const exportDirectorySetting = new Setting(containerEl)
-			.setName('Export Directory')
-			.setDesc('Directory to export notes to');
+			.setName(lang.exportDirectory)
+			.setDesc(lang.exportDirectoryDesc);
 		
 		let textComponent: HTMLInputElement;
 		exportDirectorySetting
@@ -368,7 +500,7 @@ class SampleSettingTab extends PluginSettingTab {
 					.setDisabled(true); // 禁用文本输入框
 			})
 			.addButton(button => button
-				.setButtonText('Browse')
+				.setButtonText(lang.browse)
 				.onClick(async () => {
 					// 尝试使用 Electron 的原生文件选择器
 					try {
@@ -401,7 +533,7 @@ class SampleSettingTab extends PluginSettingTab {
 							}
 						} catch (secondError) {
 							// 如果都不行，回退到提示用户手动输入
-							new Notice('无法打开文件选择器，请手动输入路径');
+							new Notice(lang.cannotOpenFilePicker);
 							textComponent.disabled = false;
 							textComponent.onchange = async (e) => {
 								const target = e.target as HTMLInputElement;
@@ -414,8 +546,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// 新增 host 设置项
 		new Setting(containerEl)
-			.setName('Host')
-			.setDesc('Host for image URLs (e.g., https://images.yasking.org)')
+			.setName(lang.host)
+			.setDesc(lang.hostDesc)
 			.addText(text => text
 				.setPlaceholder('Enter host URL')
 				.setValue(this.plugin.settings.host || '')
@@ -426,8 +558,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// 新增 defaultPrefixPath 设置项
 		new Setting(containerEl)
-			.setName('Default Prefix Path')
-			.setDesc('Default prefix path for image URLs (e.g., moments)')
+			.setName(lang.defaultPrefixPath)
+			.setDesc(lang.defaultPrefixPathDesc)
 			.addText(text => text
 				.setPlaceholder('Enter default prefix path')
 				.setValue(this.plugin.settings.defaultPrefixPath || '')
@@ -438,8 +570,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// 新增 prefixPaths 列表设置项
 		new Setting(containerEl)
-			.setName('Prefix Paths List')
-			.setDesc('List of available prefix paths (one per line)')
+			.setName(lang.prefixPathsList)
+			.setDesc(lang.prefixPathsListDesc)
 			.addTextArea(text => text
 				.setPlaceholder('moments\nblog\nphotos\n...')
 				.setValue(this.plugin.settings.prefixPaths ? this.plugin.settings.prefixPaths.join('\n') : '')
@@ -451,8 +583,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// 添加最小图片宽度百分比设置
 		new Setting(containerEl)
-			.setName('最小图片宽度百分比')
-			.setDesc('设置图片的最小宽度百分比（0表示不限制）')
+			.setName(lang.minImageWidthPercentage)
+			.setDesc(lang.minImageWidthPercentageDesc)
 			.addSlider(slider => slider
 				.setLimits(0, 100, 5)
 				.setValue(this.plugin.settings.minImageWidthPercentage || 0)
@@ -464,8 +596,8 @@ class SampleSettingTab extends PluginSettingTab {
 
 		// 添加启用元数据设置
 		new Setting(containerEl)
-			.setName('启用 Meta 元数据')
-			.setDesc('导出时在文章开头自动添加 title、date、id 等元数据')
+			.setName(lang.enableMetaData)
+			.setDesc(lang.enableMetaDataDesc)
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableMetaData || false)
 				.onChange(async (value) => {
