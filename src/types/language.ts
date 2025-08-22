@@ -3,6 +3,8 @@ export interface LanguageStrings {
 	// 设置项
 	exportDirectory: string;
 	exportDirectoryDesc: string;
+	imageExportConfig: string;
+	imageExportConfigDesc: string;
 	host: string;
 	hostDesc: string;
 	defaultArticleType: string;

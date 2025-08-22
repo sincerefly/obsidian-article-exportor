@@ -255,18 +255,6 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					}
 				}));
 
-		// Host
-		new Setting(containerEl)
-			.setName(lang.host)
-			.setDesc(lang.hostDesc)
-			.addText(text => text
-				.setPlaceholder('Enter host URL')
-				.setValue(this.plugin.settings.host || '')
-				.onChange(async (value) => {
-					this.plugin.settings.host = value;
-					await this.plugin.saveSettings();
-				}));
-
 		// Default Note Type
 		const defaultArticleTypeSetting = new Setting(containerEl)
 			.setName(lang.defaultArticleType)
@@ -536,8 +524,44 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 		// 初始化笔记类型配置折叠状态
 		updateNoteTypesExpandState();
 
+		// Image Export Configuration
+		const imageExportConfigSetting = new Setting(containerEl)
+			.setName(lang.imageExportConfig)
+			.setDesc(lang.imageExportConfigDesc);
+		
+		// 添加折叠按钮到图像配置
+		let imageExportExpanded = this.plugin.settings.imageExportConfigExpanded ?? true; // 使用保存的状态，默认展开
+		let imageExportExpandButtonEl: HTMLButtonElement;
+		const imageExportExpandButton = imageExportConfigSetting.addButton(button => {
+			imageExportExpandButtonEl = button.buttonEl;
+			button.setButtonText(imageExportExpanded ? '▲' : '▼')
+				.setTooltip('折叠/展开导出图像配置')
+				.onClick(async () => {
+					imageExportExpanded = !imageExportExpanded;
+					this.plugin.settings.imageExportConfigExpanded = imageExportExpanded;
+					await this.plugin.saveSettings();
+					updateImageExportExpandState();
+				});
+			return button;
+		});
+
+		// 创建可折叠的图像配置内容容器
+		const imageExportContentContainer = containerEl.createEl('div', { cls: 'image-export-content' });
+
+		// Host
+		new Setting(imageExportContentContainer)
+			.setName(lang.host)
+			.setDesc(lang.hostDesc)
+			.addText(text => text
+				.setPlaceholder('Enter host URL')
+				.setValue(this.plugin.settings.host || '')
+				.onChange(async (value) => {
+					this.plugin.settings.host = value;
+					await this.plugin.saveSettings();
+				}));
+
 		// Min image width percentage
-		new Setting(containerEl)
+		new Setting(imageExportContentContainer)
 			.setName(lang.minImageWidthPercentage)
 			.setDesc(lang.minImageWidthPercentageDesc)
 			.addSlider(slider => slider
@@ -548,6 +572,20 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					this.plugin.settings.minImageWidthPercentage = value;
 					await this.plugin.saveSettings();
 				}));
+
+		// 图像配置折叠状态更新函数
+		const updateImageExportExpandState = () => {
+			if (imageExportExpanded) {
+				imageExportContentContainer.style.display = 'block';
+				imageExportExpandButtonEl.textContent = '▲';
+			} else {
+				imageExportContentContainer.style.display = 'none';
+				imageExportExpandButtonEl.textContent = '▼';
+			}
+		};
+
+		// 初始化图像配置折叠状态
+		updateImageExportExpandState();
 
 		// Enable meta data
 		new Setting(containerEl)

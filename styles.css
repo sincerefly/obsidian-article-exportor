@@ -68,18 +68,34 @@ If your plugin does not need CSS, delete this file.
 
 /* 设置页面样式 */
 .add-article-type {
-	margin: 20px 0;
-	padding: 20px;
+	margin: 16px 0;
+	padding: 16px;
 	border: 2px dashed var(--background-modifier-border);
-	border-radius: 8px;
-	background: var(--background-secondary);
+	border-radius: 6px;
+	background: var(--background-primary);
 }
 
 .add-article-type h4 {
-	margin: 0 0 15px 0;
-	color: var(--text-normal);
-	font-size: 14px;
+	margin: 0 0 12px 0;
+	color: var(--text-muted);
+	font-size: 13px;
 	font-weight: 600;
+}
+
+/* 添加新类型区域内的设置项 */
+.add-article-type .setting-item {
+	font-size: 12px;
+}
+
+.add-article-type .setting-item .setting-item-name {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+
+.add-article-type .setting-item .setting-item-description {
+	font-size: 11px;
+	color: var(--text-faint);
 }
 
 /* 必填字段样式 */
@@ -95,16 +111,17 @@ If your plugin does not need CSS, delete this file.
 
 .article-type-config {
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	padding: 15px;
-	margin: 15px 0;
-	background: var(--background-secondary);
+	border-radius: 6px;
+	padding: 12px;
+	margin: 12px 0;
+	background: var(--background-primary);
 	transition: all 0.2s ease;
 	box-sizing: border-box;
+	font-size: 13px;
 }
 
 .article-type-config.expanded {
-	padding: 20px;
+	padding: 16px;
 }
 
 .article-type-header {
@@ -133,9 +150,9 @@ If your plugin does not need CSS, delete this file.
 
 .article-type-name {
 	margin: 0;
-	font-size: 16px;
+	font-size: 13px;
 	font-weight: 600;
-	color: var(--text-normal);
+	color: var(--text-muted);
 }
 
 .article-type-status {
@@ -186,6 +203,23 @@ If your plugin does not need CSS, delete this file.
 	transition: all 0.3s ease;
 }
 
+/* 笔记类型详情内的设置项 */
+.article-type-details .setting-item {
+	font-size: 12px;
+	padding: 8px 0;
+}
+
+.article-type-details .setting-item .setting-item-name {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+
+.article-type-details .setting-item .setting-item-description {
+	font-size: 11px;
+	color: var(--text-faint);
+}
+
 .article-type-details[style*="display: none"] {
 	max-height: 0;
 	opacity: 0;
@@ -218,6 +252,52 @@ If your plugin does not need CSS, delete this file.
 .note-types-content[style*="display: block"] {
 	max-height: none;
 	opacity: 1;
+}
+
+/* 笔记类型配置子项样式 */
+.note-types-content .setting-item {
+	font-size: 13px;
+}
+
+.note-types-content .setting-item .setting-item-name {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+
+.note-types-content .setting-item .setting-item-description {
+	font-size: 12px;
+	color: var(--text-faint);
+}
+
+/* 图像配置折叠容器样式 */
+.image-export-content {
+	overflow: hidden;
+	transition: all 0.3s ease;
+	margin-top: 10px;
+}
+
+.image-export-content[style*="display: none"] {
+	max-height: 0;
+	opacity: 0;
+	margin-top: 0;
+}
+
+.image-export-content[style*="display: block"] {
+	max-height: none;
+	opacity: 1;
+}
+
+/* 图像配置子项样式 */
+.image-export-content .setting-item .setting-item-name {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+
+.image-export-content .setting-item .setting-item-description {
+	font-size: 12px;
+	color: var(--text-faint);
 }
 
 /* 折叠按钮样式优化 */
