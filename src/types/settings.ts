@@ -14,4 +14,5 @@ export interface ArticleExporterSettings {
 	articleTypes: ArticleTypeConfig[]; // 笔记类型配置列表
 	minImageWidthPercentage?: number; // 图片最小宽度百分比
 	enableMetaData?: boolean; // 是否启用生成 meta 元数据
+	noteTypesConfigExpanded?: boolean; // 笔记类型配置是否展开
 }

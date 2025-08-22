@@ -34,5 +34,6 @@ export const DEFAULT_SETTINGS: ArticleExporterSettings = {
 		}
 	],
 	minImageWidthPercentage: 0, // 默认不限制最小宽度
-	enableMetaData: false // 默认不启用 meta 元数据
+	enableMetaData: false, // 默认不启用 meta 元数据
+	noteTypesConfigExpanded: true // 默认展开笔记类型配置
 };

@@ -291,12 +291,31 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 		});
 
 		// Note Types Configuration
-		new Setting(containerEl)
+		const noteTypesConfigSetting = new Setting(containerEl)
 			.setName(lang.articleTypesConfig)
 			.setDesc(lang.articleTypesConfigDesc);
+		
+		// 添加折叠按钮到笔记类型配置
+		let noteTypesExpanded = this.plugin.settings.noteTypesConfigExpanded ?? true; // 使用保存的状态，默认展开
+		let noteTypesExpandButtonEl: HTMLButtonElement;
+		const noteTypesExpandButton = noteTypesConfigSetting.addButton(button => {
+			noteTypesExpandButtonEl = button.buttonEl;
+			button.setButtonText(noteTypesExpanded ? '▲' : '▼')
+				.setTooltip('折叠/展开笔记类型配置')
+				.onClick(async () => {
+					noteTypesExpanded = !noteTypesExpanded;
+					this.plugin.settings.noteTypesConfigExpanded = noteTypesExpanded;
+					await this.plugin.saveSettings();
+					updateNoteTypesExpandState();
+				});
+			return button;
+		});
+
+		// 创建可折叠的笔记类型内容容器
+		const noteTypesContentContainer = containerEl.createEl('div', { cls: 'note-types-content' });
 
 		// 添加新笔记类型区域
-		const addTypeContainer = containerEl.createEl('div', { cls: 'add-article-type' });
+		const addTypeContainer = noteTypesContentContainer.createEl('div', { cls: 'add-article-type' });
 		addTypeContainer.createEl('h4', { text: lang.addNewArticleType });
 		
 		let newTypeName = '';
@@ -377,7 +396,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 		// 显示现有笔记类型
 		this.plugin.settings.articleTypes.forEach((type, index) => {
-			const typeContainer = containerEl.createEl('div', { cls: 'article-type-config' });
+			const typeContainer = noteTypesContentContainer.createEl('div', { cls: 'article-type-config' });
 			
 			// 折叠/展开头部
 			const headerContainer = typeContainer.createEl('div', { cls: 'article-type-header' });
@@ -502,6 +521,20 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 			// 初始状态
 			updateExpandState();
 		});
+
+		// 笔记类型配置折叠状态更新函数
+		const updateNoteTypesExpandState = () => {
+			if (noteTypesExpanded) {
+				noteTypesContentContainer.style.display = 'block';
+				noteTypesExpandButtonEl.textContent = '▲';
+			} else {
+				noteTypesContentContainer.style.display = 'none';
+				noteTypesExpandButtonEl.textContent = '▼';
+			}
+		};
+
+		// 初始化笔记类型配置折叠状态
+		updateNoteTypesExpandState();
 
 		// Min image width percentage
 		new Setting(containerEl)

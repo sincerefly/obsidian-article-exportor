@@ -202,6 +202,37 @@ If your plugin does not need CSS, delete this file.
 	gap: 15px;
 }
 
+/* 笔记类型配置折叠容器样式 */
+.note-types-content {
+	overflow: hidden;
+	transition: all 0.3s ease;
+	margin-top: 10px;
+}
+
+.note-types-content[style*="display: none"] {
+	max-height: 0;
+	opacity: 0;
+	margin-top: 0;
+}
+
+.note-types-content[style*="display: block"] {
+	max-height: none;
+	opacity: 1;
+}
+
+/* 折叠按钮样式优化 */
+.setting-item .setting-item-control button {
+	font-size: 12px;
+	padding: 4px 8px;
+	min-width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+	line-height: 1;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
 	.article-type-item {
