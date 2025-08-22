@@ -5,10 +5,10 @@ export interface LanguageStrings {
 	exportDirectoryDesc: string;
 	host: string;
 	hostDesc: string;
-	defaultPrefixPath: string;
-	defaultPrefixPathDesc: string;
-	prefixPathsList: string;
-	prefixPathsListDesc: string;
+	defaultArticleType: string;
+	defaultArticleTypeDesc: string;
+	articleTypesConfig: string;
+	articleTypesConfigDesc: string;
 	minImageWidthPercentage: string;
 	minImageWidthPercentageDesc: string;
 	enableMetaData: string;
@@ -22,13 +22,13 @@ export interface LanguageStrings {
 	setExportDirectoryFirst: string;
 	cannotOpenFilePicker: string;
 	pleaseEnterPath: string;
+	noEnabledArticleTypes: string;
 	
 	// 模态框
-	selectPrefixPath: string;
-	selectPrefixPathDesc: string;
-	defaultOption: string;
-	noPrefixOption: string;
+	selectArticleType: string;
+	selectArticleTypeDesc: string;
 	cancel: string;
+	confirm: string;
 	
 	// 命令
 	exportCurrentNote: string;

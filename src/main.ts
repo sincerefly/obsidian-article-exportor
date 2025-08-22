@@ -3,13 +3,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { moment } from 'obsidian';
 
-import { ArticleExporterSettings, IArticleExporter } from './types';
+import { ArticleExporterSettings, IArticleExporter, ArticleTypeConfig } from './types';
 import { DEFAULT_SETTINGS } from './constants/default-settings';
 import { getLanguageStrings } from './services/language-service';
-import { PrefixPathSelectionModal } from './components/prefix-path-modal';
+import { ArticleTypeSelectionModal } from './components/article-type-modal';
 import { SampleModal } from './components/sample-modal';
 import { generateImageUrl, getFileExtension, generateImageFileName } from './utils/path-utils';
 import { saveImageFile, saveArticleFile } from './utils/file-utils';
+import { generateMetaData, getArticleTypeByName } from './utils/meta-utils';
 
 export default class ArticleExporter extends Plugin implements IArticleExporter {
 	settings: ArticleExporterSettings;
@@ -26,16 +27,26 @@ export default class ArticleExporter extends Plugin implements IArticleExporter 
 				const activeFile = this.app.workspace.getActiveFile();
 				console.log('活动文件:', activeFile?.basename);
 				if (activeFile) {
-					if (this.settings.defaultPrefixPath || (this.settings.prefixPaths && this.settings.prefixPaths.length > 0)) {
-						if (this.settings.defaultPrefixPath) {
-							await this.exportNoteToFile(activeFile, this.settings.defaultPrefixPath);
+					const enabledTypes = this.settings.articleTypes.filter(type => type.enabled);
+					if (enabledTypes.length > 0) {
+						if (this.settings.defaultArticleType) {
+							const defaultType = getArticleTypeByName(this.settings.articleTypes, this.settings.defaultArticleType);
+							if (defaultType && defaultType.enabled) {
+								await this.exportNoteToFile(activeFile, defaultType);
+							} else {
+								// 默认类型不存在或未启用，显示选择对话框
+								new ArticleTypeSelectionModal(this.app, this as unknown as IArticleExporter, activeFile, async (selectedType: ArticleTypeConfig) => {
+									await this.exportNoteToFile(activeFile, selectedType);
+								}).open();
+							}
 						} else {
-							new PrefixPathSelectionModal(this.app, this as unknown as IArticleExporter, activeFile, async (selectedPath: string) => {
-								await this.exportNoteToFile(activeFile, selectedPath);
+							// 没有默认类型，显示选择对话框
+							new ArticleTypeSelectionModal(this.app, this as unknown as IArticleExporter, activeFile, async (selectedType: ArticleTypeConfig) => {
+								await this.exportNoteToFile(activeFile, selectedType);
 							}).open();
 						}
 					} else {
-						await this.exportNoteToFile(activeFile, '');
+						new Notice(getLanguageStrings(this.app).noEnabledArticleTypes);
 					}
 				} else {
 					new Notice(getLanguageStrings(this.app).noActiveNote);
@@ -58,10 +69,11 @@ export default class ArticleExporter extends Plugin implements IArticleExporter 
 	}
 
 	// 导出笔记到文件
-	async exportNoteToFile(file: TFile, selectedPrefixPath: string = ''): Promise<void> {
+	async exportNoteToFile(file: TFile, articleType: ArticleTypeConfig): Promise<void> {
 		console.log('开始导出文件:', file.basename);
 		console.log('导出目录:', this.settings.exportDirectory);
-		console.log('选择的前缀路径:', selectedPrefixPath);
+		console.log('选择的文章类型:', articleType.name);
+		console.log('前缀路径:', articleType.prefixPath);
 		
 		const data = await this.app.vault.read(file);
 		const exportDir = this.settings.exportDirectory;
@@ -114,7 +126,7 @@ export default class ArticleExporter extends Plugin implements IArticleExporter 
 					imageEl.onload = () => {
 						const actualWidth = imageEl.width;
 
-						let imageUrl = generateImageUrl(this.settings.host, selectedPrefixPath, timestamp, imageName);
+						let imageUrl = generateImageUrl(this.settings.host, articleType.prefixPath, timestamp, imageName);
 
 						if (specifiedWidth) {
 							let widthPercentage = ((specifiedWidth / actualWidth) * 100).toFixed(2);
@@ -143,10 +155,8 @@ export default class ArticleExporter extends Plugin implements IArticleExporter 
 		// 元数据
 		let finalData = updatedData;
 		if (this.settings.enableMetaData) {
-			const metaData = `title: ${file.basename}\n` +
-				`date: ${moment().format('YYYY-MM-DD HH:mm:ss')}\n` +
-				`id: ${timestamp}\n\n`;
-			finalData = metaData + updatedData;
+			const metaData = generateMetaData(articleType, file.basename, timestamp);
+			finalData = metaData + '\n' + updatedData;
 		}
 
 		// 导出文章
@@ -257,29 +267,171 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		// Default Prefix Path
-		new Setting(containerEl)
-			.setName(lang.defaultPrefixPath)
-			.setDesc(lang.defaultPrefixPathDesc)
+		// Default Article Type
+		const defaultArticleTypeSetting = new Setting(containerEl)
+			.setName(lang.defaultArticleType)
+			.setDesc(lang.defaultArticleTypeDesc);
+		
+		const defaultTypeSelect = defaultArticleTypeSetting.addDropdown(dropdown => {
+			// 添加"无默认"选项
+			dropdown.addOption('', '无默认');
+			
+			// 添加所有启用的文章类型
+			this.plugin.settings.articleTypes
+				.filter(type => type.enabled)
+				.forEach(type => {
+					dropdown.addOption(type.name, type.name);
+				});
+			
+			dropdown.setValue(this.plugin.settings.defaultArticleType || '');
+			dropdown.onChange(async (value) => {
+				this.plugin.settings.defaultArticleType = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+		// Article Types Configuration
+		containerEl.createEl('h3', { text: lang.articleTypesConfig });
+		containerEl.createEl('p', { text: lang.articleTypesConfigDesc });
+
+		// 添加新文章类型区域
+		const addTypeContainer = containerEl.createEl('div', { cls: 'add-article-type' });
+		addTypeContainer.createEl('h4', { text: '添加新文章类型' });
+		
+		let newTypeName = '';
+		let newTypePrefix = '';
+		
+		// 类型名称输入框
+		const nameTextComponent = new Setting(addTypeContainer)
+			.setName('类型名称')
+			.setDesc('输入文章类型名称，如：Moments、Photos、Reading等')
 			.addText(text => text
-				.setPlaceholder('Enter default prefix path')
-				.setValue(this.plugin.settings.defaultPrefixPath || '')
-				.onChange(async (value) => {
-					this.plugin.settings.defaultPrefixPath = value;
-					await this.plugin.saveSettings();
+				.setPlaceholder('输入类型名称')
+				.onChange((value) => {
+					newTypeName = value;
+					// 自动生成前缀路径建议
+					if (value.trim() && !newTypePrefix) {
+						const suggestedPrefix = value.trim().toLowerCase().replace(/\s+/g, '-');
+						newTypePrefix = suggestedPrefix;
+						const inputElement = prefixTextComponent.controlEl.querySelector('input');
+						if (inputElement) {
+							(inputElement as HTMLInputElement).value = suggestedPrefix;
+						}
+					}
 				}));
 
-		// Prefix Paths List
-		new Setting(containerEl)
-			.setName(lang.prefixPathsList)
-			.setDesc(lang.prefixPathsListDesc)
-			.addTextArea(text => text
-				.setPlaceholder('moments\nblog\nphotos\n...')
-				.setValue(this.plugin.settings.prefixPaths ? this.plugin.settings.prefixPaths.join('\n') : '')
-				.onChange(async (value) => {
-					this.plugin.settings.prefixPaths = value.split('\n').filter(line => line.trim() !== '');
-					await this.plugin.saveSettings();
+		// 前缀路径输入框
+		const prefixTextComponent = new Setting(addTypeContainer)
+			.setName('前缀路径')
+			.setDesc('输入图片链接的前缀路径，如：moments、photos、reading等')
+			.addText(text => text
+				.setPlaceholder('输入前缀路径')
+				.onChange((value) => {
+					newTypePrefix = value;
 				}));
+
+		// 添加按钮
+		new Setting(addTypeContainer)
+			.setName('')
+			.addButton(button => button
+				.setButtonText('+ 添加文章类型')
+				.setCta()
+				.onClick(async () => {
+					if (!newTypeName.trim()) {
+						new Notice('请输入类型名称');
+						return;
+					}
+					if (!newTypePrefix.trim()) {
+						new Notice('请输入前缀路径');
+						return;
+					}
+					
+					// 检查是否已存在相同名称的类型
+					const existingType = this.plugin.settings.articleTypes.find(
+						type => type.name.toLowerCase() === newTypeName.trim().toLowerCase()
+					);
+					if (existingType) {
+						new Notice('已存在相同名称的文章类型');
+						return;
+					}
+					
+					// 添加新的文章类型
+					const newType = {
+						name: newTypeName.trim(),
+						prefixPath: newTypePrefix.trim(),
+						enabled: true
+					};
+					this.plugin.settings.articleTypes.push(newType);
+					await this.plugin.saveSettings();
+					
+					// 清空输入框
+					const nameInput = nameTextComponent.controlEl.querySelector('input') as HTMLInputElement;
+					const prefixInput = prefixTextComponent.controlEl.querySelector('input') as HTMLInputElement;
+					if (nameInput) nameInput.value = '';
+					if (prefixInput) prefixInput.value = '';
+					newTypeName = '';
+					newTypePrefix = '';
+					
+					// 重新渲染设置页面
+					this.display();
+					
+					new Notice(`已添加文章类型：${newType.name}`);
+				}));
+
+		// 显示现有文章类型
+		this.plugin.settings.articleTypes.forEach((type, index) => {
+			const typeContainer = containerEl.createEl('div', { cls: 'article-type-config' });
+			
+			// 类型基本信息
+			const basicInfo = typeContainer.createEl('div', { cls: 'type-basic-info' });
+			
+			// 启用开关
+			new Setting(basicInfo)
+				.setName(type.name)
+				.addToggle(toggle => toggle
+					.setValue(type.enabled)
+					.onChange(async (value) => {
+						this.plugin.settings.articleTypes[index].enabled = value;
+						await this.plugin.saveSettings();
+					}));
+
+			// 类型名称
+			new Setting(basicInfo)
+				.setName('类型名称')
+				.addText(text => text
+					.setValue(type.name)
+					.onChange(async (value) => {
+						this.plugin.settings.articleTypes[index].name = value;
+						await this.plugin.saveSettings();
+					}));
+
+			// 前缀路径
+			new Setting(basicInfo)
+				.setName('前缀路径')
+				.addText(text => text
+					.setValue(type.prefixPath)
+					.onChange(async (value) => {
+						this.plugin.settings.articleTypes[index].prefixPath = value;
+						await this.plugin.saveSettings();
+					}));
+
+			// 删除按钮
+			new Setting(basicInfo)
+				.setName('删除')
+				.addButton(button => button
+					.setButtonText('删除')
+					.setWarning()
+					.onClick(async () => {
+						// 删除文章类型
+						this.plugin.settings.articleTypes.splice(index, 1);
+						await this.plugin.saveSettings();
+						// 重新渲染设置页面
+						this.display();
+					}));
+
+			// 分隔线
+			typeContainer.createEl('hr');
+		});
 
 		// Min image width percentage
 		new Setting(containerEl)

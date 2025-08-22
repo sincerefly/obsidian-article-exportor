@@ -6,3 +6,107 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* 文章类型选择模态框样式 */
+.article-type-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 20px 0;
+}
+
+.article-type-item {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 15px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--background-primary);
+}
+
+.article-type-item:hover {
+	border-color: var(--interactive-accent);
+	background: var(--background-secondary);
+}
+
+.article-type-item.selected {
+	border-color: var(--interactive-accent);
+	background: var(--background-secondary);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.article-type-item h3 {
+	margin: 0 0 10px 0;
+	color: var(--text-normal);
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.article-type-info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.prefix-path {
+	background: var(--background-modifier-border);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	color: var(--text-muted);
+	font-family: var(--font-monospace);
+}
+
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+/* 设置页面样式 */
+.add-article-type {
+	margin: 20px 0;
+	padding: 20px;
+	border: 2px dashed var(--background-modifier-border);
+	border-radius: 8px;
+	background: var(--background-secondary);
+}
+
+.add-article-type h4 {
+	margin: 0 0 15px 0;
+	color: var(--text-normal);
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.article-type-config {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 20px;
+	margin: 15px 0;
+	background: var(--background-secondary);
+}
+
+.type-basic-info {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+	.article-type-item {
+		padding: 12px;
+	}
+	
+	.article-type-config {
+		padding: 15px;
+	}
+	
+	.type-basic-info {
+		gap: 12px;
+	}
+}
