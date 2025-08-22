@@ -100,6 +100,7 @@ If your plugin does not need CSS, delete this file.
 	margin: 15px 0;
 	background: var(--background-secondary);
 	transition: all 0.2s ease;
+	box-sizing: border-box;
 }
 
 .article-type-config.expanded {
@@ -110,16 +111,16 @@ If your plugin does not need CSS, delete this file.
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding-bottom: 10px;
+	padding: 10px 15px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	margin-bottom: 15px;
 	cursor: pointer;
+	box-sizing: border-box;
+	transition: background-color 0.2s ease;
 }
 
 .article-type-header:hover {
 	background: var(--background-modifier-hover);
-	margin: 0 -15px 15px -15px;
-	padding: 10px 15px;
 	border-radius: 4px;
 }
 
