@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFolder } from 'obsidian';
 import { TFile } from 'obsidian';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -355,15 +355,61 @@ class SampleSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings(); // 保存设置
 				}));
 
-		new Setting(containerEl)
+		const exportDirectorySetting = new Setting(containerEl)
 			.setName('Export Directory')
-			.setDesc('Directory to export notes to')
-			.addText(text => text
-				.setPlaceholder('Enter export directory')
-				.setValue(this.plugin.settings.exportDirectory || '')
-				.onChange(async (value) => {
-					this.plugin.settings.exportDirectory = value;
-					await this.plugin.saveSettings(); // 保存设置
+			.setDesc('Directory to export notes to');
+		
+		let textComponent: HTMLInputElement;
+		exportDirectorySetting
+			.addText(text => {
+				textComponent = text.inputEl;
+				text.setPlaceholder('Click "Browse" to select directory')
+					.setValue(this.plugin.settings.exportDirectory || '')
+					.setDisabled(true); // 禁用文本输入框
+			})
+			.addButton(button => button
+				.setButtonText('Browse')
+				.onClick(async () => {
+					// 尝试使用 Electron 的原生文件选择器
+					try {
+						const { dialog } = require('@electron/remote');
+						const result = await dialog.showOpenDialog({
+							properties: ['openDirectory'],
+							title: '选择导出目录'
+						});
+						
+						if (!result.canceled && result.filePaths.length > 0) {
+							this.plugin.settings.exportDirectory = result.filePaths[0];
+							await this.plugin.saveSettings();
+							// 直接更新文本框的值
+							textComponent.value = this.plugin.settings.exportDirectory || '';
+						}
+					} catch (error) {
+						// 如果 @electron/remote 不可用，尝试使用 electron.remote
+						try {
+							const { dialog } = require('electron').remote;
+							const result = await dialog.showOpenDialog({
+								properties: ['openDirectory'],
+								title: '选择导出目录'
+							});
+							
+							if (!result.canceled && result.filePaths.length > 0) {
+								this.plugin.settings.exportDirectory = result.filePaths[0];
+								await this.plugin.saveSettings();
+								// 直接更新文本框的值
+								textComponent.value = this.plugin.settings.exportDirectory || '';
+							}
+						} catch (secondError) {
+							// 如果都不行，回退到提示用户手动输入
+							new Notice('无法打开文件选择器，请手动输入路径');
+							textComponent.disabled = false;
+							textComponent.onchange = async (e) => {
+								const target = e.target as HTMLInputElement;
+								this.plugin.settings.exportDirectory = target.value;
+								await this.plugin.saveSettings();
+							};
+						}
+					}
 				}));
 
 		// 新增 host 设置项
