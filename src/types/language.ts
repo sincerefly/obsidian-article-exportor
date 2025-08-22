@@ -53,4 +53,7 @@ export interface LanguageStrings {
 	confirmDeleteDefaultType: string;
 	confirmDeleteDefaultTypeDesc: string;
 	confirmContinue: string;
+	enabled: string;
+	disabled: string;
+	enableType: string;
 }

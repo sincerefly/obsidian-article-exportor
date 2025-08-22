@@ -55,7 +55,10 @@ export const LANGUAGES: Record<string, LanguageStrings> = {
 		isDefaultType: '"是当前的默认文章类型。\n\n删除后将清除默认设置，是否继续？',
 		confirmDeleteDefaultType: '',
 		confirmDeleteDefaultTypeDesc: '',
-		confirmContinue: '是否继续？'
+		confirmContinue: '是否继续？',
+		enabled: '已启用',
+		disabled: '已禁用',
+		enableType: '启用类型'
 	},
 	'en': {
 		// 设置项
@@ -110,6 +113,9 @@ export const LANGUAGES: Record<string, LanguageStrings> = {
 		isDefaultType: '" is the current default article type.\n\nDeleting will clear the default setting, continue?',
 		confirmDeleteDefaultType: '',
 		confirmDeleteDefaultTypeDesc: '',
-		confirmContinue: 'Continue?'
+		confirmContinue: 'Continue?',
+		enabled: 'Enabled',
+		disabled: 'Disabled',
+		enableType: 'Enable Type'
 	}
 };

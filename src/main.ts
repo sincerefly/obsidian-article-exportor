@@ -378,31 +378,57 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 		this.plugin.settings.articleTypes.forEach((type, index) => {
 			const typeContainer = containerEl.createEl('div', { cls: 'article-type-config' });
 			
-			// 类型基本信息
-			const basicInfo = typeContainer.createEl('div', { cls: 'type-basic-info' });
+			// 折叠/展开头部
+			const headerContainer = typeContainer.createEl('div', { cls: 'article-type-header' });
+			const isExpanded = false; // 默认折叠状态
+			
+			// 类型名称和状态显示（无交互元素）
+			const headerInfo = headerContainer.createEl('div', { cls: 'article-type-header-info' });
+			const nameEl = headerInfo.createEl('h4', { text: type.name, cls: 'article-type-name' });
+			const statusEl = headerInfo.createEl('span', { 
+				text: type.enabled ? lang.enabled : lang.disabled,
+				cls: `article-type-status ${type.enabled ? 'enabled' : 'disabled'}`
+			});
+
+			// 展开/折叠按钮
+			const expandButton = headerContainer.createEl('button', { 
+				cls: 'article-type-expand-btn',
+				text: '▼'
+			});
+			
+			// 详细配置区域（默认隐藏）
+			const detailsContainer = typeContainer.createEl('div', { 
+				cls: 'article-type-details',
+				attr: { style: 'display: none;' }
+			});
 			
 			// 启用开关
-			new Setting(basicInfo)
-				.setName(type.name)
+			new Setting(detailsContainer)
+				.setName(lang.enableType)
 				.addToggle(toggle => toggle
 					.setValue(type.enabled)
 					.onChange(async (value) => {
 						this.plugin.settings.articleTypes[index].enabled = value;
 						await this.plugin.saveSettings();
+						// 更新头部状态显示
+						statusEl.textContent = value ? lang.enabled : lang.disabled;
+						statusEl.className = `article-type-status ${value ? 'enabled' : 'disabled'}`;
 					}));
-
+			
 			// 类型名称
-			new Setting(basicInfo)
+			new Setting(detailsContainer)
 				.setName(lang.articleTypeName.replace(' *', ''))
 				.addText(text => text
 					.setValue(type.name)
 					.onChange(async (value) => {
 						this.plugin.settings.articleTypes[index].name = value;
 						await this.plugin.saveSettings();
+						// 更新头部显示的名称
+						nameEl.textContent = value;
 					}));
 
 			// 前缀路径
-			new Setting(basicInfo)
+			new Setting(detailsContainer)
 				.setName(lang.prefixPath)
 				.addText(text => text
 					.setValue(type.prefixPath)
@@ -412,7 +438,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					}));
 
 			// 删除按钮
-			new Setting(basicInfo)
+			new Setting(detailsContainer)
 				.setName(lang.deleteArticleType)
 				.addButton(button => button
 					.setButtonText(lang.deleteArticleType)
@@ -445,8 +471,35 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 						this.display();
 					}));
 
-			// 分隔线
-			typeContainer.createEl('hr');
+			// 折叠/展开功能
+			let expanded = isExpanded;
+			const updateExpandState = () => {
+				if (expanded) {
+					detailsContainer.style.display = 'block';
+					expandButton.textContent = '▲';
+					typeContainer.addClass('expanded');
+				} else {
+					detailsContainer.style.display = 'none';
+					expandButton.textContent = '▼';
+					typeContainer.removeClass('expanded');
+				}
+			};
+
+			const toggleExpand = (e: Event) => {
+				e.stopPropagation();
+				expanded = !expanded;
+				updateExpandState();
+			};
+
+			// 点击头部区域或按钮都可以展开/折叠
+			headerContainer.addEventListener('click', toggleExpand);
+			expandButton.addEventListener('click', (e) => {
+				e.stopPropagation(); // 防止重复触发
+				toggleExpand(e);
+			});
+
+			// 初始状态
+			updateExpandState();
 		});
 
 		// Min image width percentage
