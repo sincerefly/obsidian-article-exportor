@@ -145,7 +145,9 @@ export default class ArticleExporter extends Plugin {
 
 			if (imageFile instanceof TFile) {
 				const imageData = await this.app.vault.readBinary(imageFile);
-				const imageName = `${String(imageIndex).padStart(2, '0')}.jpg`;
+				// 获取原文件的扩展名，转换为小写以保持格式统一
+				const originalExtension = path.extname(imageFile.name).toLowerCase();
+				const imageName = `${String(imageIndex).padStart(2, '0')}${originalExtension}`;
 				const imageExportPath = path.join(imageDir, imageName);
 
 				// 保存图片到导出目录
