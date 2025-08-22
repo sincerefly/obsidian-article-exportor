@@ -72,7 +72,7 @@ export default class ArticleExporter extends Plugin implements IArticleExporter 
 	async exportNoteToFile(file: TFile, articleType: ArticleTypeConfig): Promise<void> {
 		console.log('开始导出文件:', file.basename);
 		console.log('导出目录:', this.settings.exportDirectory);
-		console.log('选择的文章类型:', articleType.name);
+						console.log('选择的笔记类型:', articleType.name);
 		console.log('前缀路径:', articleType.prefixPath);
 		
 		const data = await this.app.vault.read(file);
@@ -267,7 +267,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		// Default Article Type
+		// Default Note Type
 		const defaultArticleTypeSetting = new Setting(containerEl)
 			.setName(lang.defaultArticleType)
 			.setDesc(lang.defaultArticleTypeDesc);
@@ -276,7 +276,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 			// 添加"无默认"选项
 			dropdown.addOption('', '无默认');
 			
-			// 添加所有启用的文章类型
+			// 添加所有启用的笔记类型
 			this.plugin.settings.articleTypes
 				.filter(type => type.enabled)
 				.forEach(type => {
@@ -290,11 +290,12 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 			});
 		});
 
-		// Article Types Configuration
-		containerEl.createEl('h3', { text: lang.articleTypesConfig });
-		containerEl.createEl('p', { text: lang.articleTypesConfigDesc });
+		// Note Types Configuration
+		new Setting(containerEl)
+			.setName(lang.articleTypesConfig)
+			.setDesc(lang.articleTypesConfigDesc);
 
-		// 添加新文章类型区域
+		// 添加新笔记类型区域
 		const addTypeContainer = containerEl.createEl('div', { cls: 'add-article-type' });
 		addTypeContainer.createEl('h4', { text: lang.addNewArticleType });
 		
@@ -351,7 +352,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 						return;
 					}
 					
-					// 添加新的文章类型
+					// 添加新的笔记类型
 					const newType = {
 						name: newTypeName.trim(),
 						prefixPath: newTypePrefix.trim(), // 允许为空字符串
@@ -374,7 +375,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					new Notice(`${lang.articleTypeAdded}${newType.name}`);
 				}));
 
-		// 显示现有文章类型
+		// 显示现有笔记类型
 		this.plugin.settings.articleTypes.forEach((type, index) => {
 			const typeContainer = containerEl.createEl('div', { cls: 'article-type-config' });
 			
@@ -460,7 +461,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 							this.plugin.settings.defaultArticleType = '';
 						}
 						
-						// 删除文章类型
+						// 删除笔记类型
 						this.plugin.settings.articleTypes.splice(index, 1);
 						await this.plugin.saveSettings();
 						

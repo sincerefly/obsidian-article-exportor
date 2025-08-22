@@ -29,7 +29,7 @@ export class ArticleTypeSelectionModal extends Modal {
 		contentEl.createEl('h2', { text: lang.selectArticleType });
 		contentEl.createEl('p', { text: `${lang.selectArticleTypeDesc} "${this.file.basename}"` });
 
-		// 创建文章类型列表
+		// 创建笔记类型列表
 		const typeList = contentEl.createEl('div', { cls: 'article-type-list' });
 		
 		this.plugin.settings.articleTypes

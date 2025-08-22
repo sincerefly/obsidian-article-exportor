@@ -33,7 +33,7 @@ export interface LanguageStrings {
 	// 命令
 	exportCurrentNote: string;
 	
-	// 文章类型管理
+	// 笔记类型管理
 	addNewArticleType: string;
 	articleTypeName: string;
 	articleTypeNameDesc: string;

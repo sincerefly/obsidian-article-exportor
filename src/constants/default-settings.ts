@@ -4,9 +4,9 @@ import { ArticleExporterSettings } from '../types';
 export const DEFAULT_SETTINGS: ArticleExporterSettings = {
 	mySetting: 'default',
 	host: '', // 默认主机为空
-	defaultArticleType: '', // 默认文章类型为空
+	defaultArticleType: '', // 默认笔记类型为空
 	articleTypes: [
-		// 示例文章类型，用户可以删除或修改
+		// 示例笔记类型，用户可以删除或修改
 		{
 			name: 'Moments',
 			prefixPath: 'moments',

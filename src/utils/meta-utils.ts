@@ -15,7 +15,7 @@ export function generateMetaData(
 	return metaData;
 }
 
-// 根据名称获取文章类型配置
+// 根据名称获取笔记类型配置
 export function getArticleTypeByName(
 	articleTypes: ArticleTypeConfig[],
 	name: string
@@ -23,7 +23,7 @@ export function getArticleTypeByName(
 	return articleTypes.find(type => type.name === name);
 }
 
-// 获取启用的文章类型列表
+// 获取启用的笔记类型列表
 export function getEnabledArticleTypes(articleTypes: ArticleTypeConfig[]): ArticleTypeConfig[] {
 	return articleTypes.filter(type => type.enabled);
 }

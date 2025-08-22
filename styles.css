@@ -78,7 +78,7 @@ If your plugin does not need CSS, delete this file.
 .add-article-type h4 {
 	margin: 0 0 15px 0;
 	color: var(--text-normal);
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 600;
 }
 
@@ -111,17 +111,17 @@ If your plugin does not need CSS, delete this file.
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 10px 15px;
+	padding: 12px 15px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	margin-bottom: 15px;
 	cursor: pointer;
 	box-sizing: border-box;
 	transition: background-color 0.2s ease;
+	border-radius: 4px;
 }
 
 .article-type-header:hover {
 	background: var(--background-modifier-hover);
-	border-radius: 4px;
 }
 
 .article-type-header-info {
@@ -163,10 +163,17 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 	font-size: 14px;
 	color: var(--text-muted);
-	padding: 5px 10px;
+	padding: 0;
 	border-radius: 4px;
 	transition: all 0.2s ease;
 	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	font-family: ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+	line-height: 1;
 }
 
 .article-type-expand-btn:hover {
@@ -175,18 +182,18 @@ If your plugin does not need CSS, delete this file.
 }
 
 .article-type-details {
-	animation: slideDown 0.2s ease;
+	overflow: hidden;
+	transition: all 0.3s ease;
 }
 
-@keyframes slideDown {
-	from {
-		opacity: 0;
-		max-height: 0;
-	}
-	to {
-		opacity: 1;
-		max-height: 500px;
-	}
+.article-type-details[style*="display: none"] {
+	max-height: 0;
+	opacity: 0;
+}
+
+.article-type-details[style*="display: block"] {
+	max-height: 500px;
+	opacity: 1;
 }
 
 .type-basic-info {
