@@ -34,7 +34,28 @@ export const LANGUAGES: Record<string, LanguageStrings> = {
 		confirm: '确认',
 		
 		// 命令
-		exportCurrentNote: '导出当前笔记'
+		exportCurrentNote: '导出当前笔记',
+		
+		// 文章类型管理
+		addNewArticleType: '添加新文章类型',
+		articleTypeName: '类型名称 *',
+		articleTypeNameDesc: '输入文章类型名称，如：Moments、Photos、Reading等',
+		articleTypeNamePlaceholder: '输入类型名称（必填）',
+		prefixPath: '前缀路径',
+		prefixPathDesc: '输入图片链接的前缀路径，如：moments、photos、reading等（可为空）',
+		prefixPathPlaceholder: '输入前缀路径（可选）',
+		addArticleTypeButton: '+ 添加文章类型',
+		pleaseEnterTypeName: '请输入类型名称',
+		duplicateTypeName: '已存在相同名称的文章类型',
+		articleTypeAdded: '已添加文章类型：',
+		articleTypeDeleted: '已删除文章类型：',
+		deleteArticleType: '删除',
+		confirmDeleteType: '确定要删除文章类型"',
+		confirmDeleteTypeDesc: '"吗？\n\n删除后无法恢复，请谨慎操作。',
+		isDefaultType: '"是当前的默认文章类型。\n\n删除后将清除默认设置，是否继续？',
+		confirmDeleteDefaultType: '',
+		confirmDeleteDefaultTypeDesc: '',
+		confirmContinue: '是否继续？'
 	},
 	'en': {
 		// 设置项
@@ -68,6 +89,27 @@ export const LANGUAGES: Record<string, LanguageStrings> = {
 		confirm: 'Confirm',
 		
 		// 命令
-		exportCurrentNote: 'Export Current Note'
+		exportCurrentNote: 'Export Current Note',
+		
+		// 文章类型管理
+		addNewArticleType: 'Add New Article Type',
+		articleTypeName: 'Type Name *',
+		articleTypeNameDesc: 'Enter article type name, such as: Moments, Photos, Reading, etc.',
+		articleTypeNamePlaceholder: 'Enter type name (required)',
+		prefixPath: 'Prefix Path',
+		prefixPathDesc: 'Enter prefix path for image URLs, such as: moments, photos, reading, etc. (can be empty)',
+		prefixPathPlaceholder: 'Enter prefix path (optional)',
+		addArticleTypeButton: '+ Add Article Type',
+		pleaseEnterTypeName: 'Please enter type name',
+		duplicateTypeName: 'Article type with the same name already exists',
+		articleTypeAdded: 'Article type added: ',
+		articleTypeDeleted: 'Article type deleted: ',
+		deleteArticleType: 'Delete',
+		confirmDeleteType: 'Are you sure you want to delete article type "',
+		confirmDeleteTypeDesc: '"?\n\nThis action cannot be undone, please proceed with caution.',
+		isDefaultType: '" is the current default article type.\n\nDeleting will clear the default setting, continue?',
+		confirmDeleteDefaultType: '',
+		confirmDeleteDefaultTypeDesc: '',
+		confirmContinue: 'Continue?'
 	}
 };

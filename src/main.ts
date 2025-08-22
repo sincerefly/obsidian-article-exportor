@@ -296,17 +296,17 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 		// 添加新文章类型区域
 		const addTypeContainer = containerEl.createEl('div', { cls: 'add-article-type' });
-		addTypeContainer.createEl('h4', { text: '添加新文章类型' });
+		addTypeContainer.createEl('h4', { text: lang.addNewArticleType });
 		
 		let newTypeName = '';
 		let newTypePrefix = '';
 		
 		// 类型名称输入框
 		const nameTextComponent = new Setting(addTypeContainer)
-			.setName('类型名称')
-			.setDesc('输入文章类型名称，如：Moments、Photos、Reading等')
+			.setName(lang.articleTypeName)
+			.setDesc(lang.articleTypeNameDesc)
 			.addText(text => text
-				.setPlaceholder('输入类型名称')
+				.setPlaceholder(lang.articleTypeNamePlaceholder)
 				.onChange((value) => {
 					newTypeName = value;
 					// 自动生成前缀路径建议
@@ -322,10 +322,10 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 		// 前缀路径输入框
 		const prefixTextComponent = new Setting(addTypeContainer)
-			.setName('前缀路径')
-			.setDesc('输入图片链接的前缀路径，如：moments、photos、reading等')
+			.setName(lang.prefixPath)
+			.setDesc(lang.prefixPathDesc)
 			.addText(text => text
-				.setPlaceholder('输入前缀路径')
+				.setPlaceholder(lang.prefixPathPlaceholder)
 				.onChange((value) => {
 					newTypePrefix = value;
 				}));
@@ -334,15 +334,11 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 		new Setting(addTypeContainer)
 			.setName('')
 			.addButton(button => button
-				.setButtonText('+ 添加文章类型')
+				.setButtonText(lang.addArticleTypeButton)
 				.setCta()
 				.onClick(async () => {
 					if (!newTypeName.trim()) {
-						new Notice('请输入类型名称');
-						return;
-					}
-					if (!newTypePrefix.trim()) {
-						new Notice('请输入前缀路径');
+						new Notice(lang.pleaseEnterTypeName);
 						return;
 					}
 					
@@ -351,14 +347,14 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 						type => type.name.toLowerCase() === newTypeName.trim().toLowerCase()
 					);
 					if (existingType) {
-						new Notice('已存在相同名称的文章类型');
+						new Notice(lang.duplicateTypeName);
 						return;
 					}
 					
 					// 添加新的文章类型
 					const newType = {
 						name: newTypeName.trim(),
-						prefixPath: newTypePrefix.trim(),
+						prefixPath: newTypePrefix.trim(), // 允许为空字符串
 						enabled: true
 					};
 					this.plugin.settings.articleTypes.push(newType);
@@ -375,7 +371,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 					// 重新渲染设置页面
 					this.display();
 					
-					new Notice(`已添加文章类型：${newType.name}`);
+					new Notice(`${lang.articleTypeAdded}${newType.name}`);
 				}));
 
 		// 显示现有文章类型
@@ -397,7 +393,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 			// 类型名称
 			new Setting(basicInfo)
-				.setName('类型名称')
+				.setName(lang.articleTypeName.replace(' *', ''))
 				.addText(text => text
 					.setValue(type.name)
 					.onChange(async (value) => {
@@ -407,7 +403,7 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 			// 前缀路径
 			new Setting(basicInfo)
-				.setName('前缀路径')
+				.setName(lang.prefixPath)
 				.addText(text => text
 					.setValue(type.prefixPath)
 					.onChange(async (value) => {
@@ -417,14 +413,34 @@ class ArticleExporterSettingTab extends PluginSettingTab {
 
 			// 删除按钮
 			new Setting(basicInfo)
-				.setName('删除')
+				.setName(lang.deleteArticleType)
 				.addButton(button => button
-					.setButtonText('删除')
+					.setButtonText(lang.deleteArticleType)
 					.setWarning()
 					.onClick(async () => {
+						// 二次确认删除
+						const confirmed = confirm(`${lang.confirmDeleteType}${type.name}${lang.confirmDeleteTypeDesc}`);
+						if (!confirmed) {
+							return;
+						}
+						
+						// 检查是否为当前默认类型
+						if (this.plugin.settings.defaultArticleType === type.name) {
+							const resetDefault = confirm(`${type.name}${lang.isDefaultType}`);
+							if (!resetDefault) {
+								return;
+							}
+							// 清除默认类型设置
+							this.plugin.settings.defaultArticleType = '';
+						}
+						
 						// 删除文章类型
 						this.plugin.settings.articleTypes.splice(index, 1);
 						await this.plugin.saveSettings();
+						
+						// 显示删除成功提示
+						new Notice(`${lang.articleTypeDeleted}${type.name}`);
+						
 						// 重新渲染设置页面
 						this.display();
 					}));

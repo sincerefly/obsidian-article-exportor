@@ -82,6 +82,17 @@ If your plugin does not need CSS, delete this file.
 	font-weight: 600;
 }
 
+/* 必填字段样式 */
+.setting-item .setting-item-name {
+	font-weight: 500;
+}
+
+/* 为包含星号的必填字段添加样式 */
+.add-article-type .setting-item:first-of-type .setting-item-name {
+	color: var(--text-accent);
+	font-weight: 600;
+}
+
 .article-type-config {
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;

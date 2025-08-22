@@ -32,4 +32,25 @@ export interface LanguageStrings {
 	
 	// 命令
 	exportCurrentNote: string;
+	
+	// 文章类型管理
+	addNewArticleType: string;
+	articleTypeName: string;
+	articleTypeNameDesc: string;
+	articleTypeNamePlaceholder: string;
+	prefixPath: string;
+	prefixPathDesc: string;
+	prefixPathPlaceholder: string;
+	addArticleTypeButton: string;
+	pleaseEnterTypeName: string;
+	duplicateTypeName: string;
+	articleTypeAdded: string;
+	articleTypeDeleted: string;
+	deleteArticleType: string;
+	confirmDeleteType: string;
+	confirmDeleteTypeDesc: string;
+	isDefaultType: string;
+	confirmDeleteDefaultType: string;
+	confirmDeleteDefaultTypeDesc: string;
+	confirmContinue: string;
 }

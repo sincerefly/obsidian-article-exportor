@@ -46,7 +46,7 @@ export class ArticleTypeSelectionModal extends Modal {
 				// 前缀路径信息
 				const typeInfo = typeItem.createEl('div', { cls: 'article-type-info' });
 				typeInfo.createEl('span', { 
-					text: `前缀路径: ${type.prefixPath}`,
+					text: `${lang.prefixPath}: ${type.prefixPath}`,
 					cls: 'prefix-path'
 				});
 
